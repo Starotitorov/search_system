@@ -7,26 +7,25 @@ from django.core.exceptions import ObjectDoesNotExist
 from search.models import Page, Word, Match
 from src.build_index import BuildIndex
 from src.html_to_text_converter import HtmlToTextConverter
+from django.db.models import Avg
 
 EPS = 1e-6
 
 class SearchEngine:
+
     def create_index(self, url):
         # url = "http://fapl.ru/"
         htmlToTextConverter = HtmlToTextConverter()
         text = htmlToTextConverter.transform_html_into_text(url)
         buildIndex = BuildIndex(text)
-        index = buildIndex.getIndex()
+        index = buildIndex.get_index()
+        number_of_words = buildIndex.get_number_of_words()
         try:
-            document = Page.objects.get(url=url)
-            for match in Match.objects.filter(page=document):
-                word = match.word
-                match.delete()
-                if not word.pages.all():
-                    word.delete()
+            self.delete_index(url)
         except ObjectDoesNotExist:
-            document = Page(url=url)
-            document.save()
+            pass
+        document = Page(url=url, number_of_words=number_of_words)
+        document.save()
         for word in index.keys():
             positions = " ".join(str(x) for x in index[word])
             try:
@@ -37,9 +36,18 @@ class SearchEngine:
             match = Match(word=word, page=document, positions=positions)
             match.save()
 
+    def delete_index(self, url):
+        document = Page.objects.get(url=url)
+        for match in Match.objects.filter(page=document):
+            word = match.word
+            match.delete()
+            if not word.pages.all():
+                word.delete()
+        document.delete()
+
     def search_one_word(self, value):
         # import pdb; pdb.set_trace()
-        pattern = re.compile(r'[-\[\].?!)(,:]')
+        pattern = re.compile(r'[\W_]+')
         value = pattern.sub('', value)
         result_pages = []
         try:
@@ -48,7 +56,6 @@ class SearchEngine:
             return result_pages
 
         matches = Match.objects.filter(word=word)
-        print matches
         for match in matches:
             page = Page.objects.get(id=match.page_id)
             result_pages.append(page.url)
@@ -56,7 +63,7 @@ class SearchEngine:
         return result_pages
 
     def _split_text_on_words(self, text):
-        pattern = re.compile(r'[-\[\].?!)(,:]')
+        pattern = re.compile(r'[\W_]+')
         return pattern.sub(' ', text).split()
 
     def search_text(self, text):
@@ -66,7 +73,7 @@ class SearchEngine:
             return list_of_results
         for word in words:
                 list_of_results.append(self.search_one_word(word))
-        return list(set(list_of_results[0]).intersection(*list_of_results))
+        return self.rank_results(words, list(set(list_of_results[0]).intersection(*list_of_results)))
 
     def search_phrase(self, phrase):
         # import pdb; pdb.set_trace()
@@ -146,14 +153,11 @@ class SearchEngine:
     def rank_results(self, words, urls):
         # import pdb; pdb.set_trace()
         scores = {}
-        pages = Page.objects.all()
-        N = len(pages)
+        N = Page.objects.count()
         k1 = 2.0
         b = 0.75
-        average_size_of_document = 0
-        for page in pages:
-            average_size_of_document += page.word_set.count()
-        average_size_of_document /= N
+        avg = Page.objects.all().aggregate(Avg('number_of_words'))
+        average_size_of_document = int(avg['number_of_words__avg'])
         for url in urls:
             score = 0.0
             words_positions = {}
@@ -164,7 +168,7 @@ class SearchEngine:
                 if idf < 0:
                     continue
                 page = Page.objects.get(url=url)
-                number_of_words_on_page = page.word_set.count()
+                number_of_words_on_page = page.number_of_words
                 current_word_positions = Match.objects.get(page=page, word=word).positions.split()
                 number_of_occurrences = len(current_word_positions)
                 words_positions[word] = current_word_positions
@@ -174,8 +178,8 @@ class SearchEngine:
                     / average_size_of_document))
                 score += r * idf
 
-                doc_phrase_weight = self.doc_phrase_weight(words_positions)
-
+            doc_phrase_weight = self.doc_phrase_weight(words_positions)
+            # print score
             scores[url] = doc_phrase_weight*1000 + score*999
         # Now we have bm25 for all documents
 
