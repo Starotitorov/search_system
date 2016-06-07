@@ -1,0 +1,46 @@
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+<div class="container">
+	<h1>URLs Control Page</h1>
+
+	<div class="well">
+	    <table class="table">
+	      <thead>
+	        <tr>
+	          <th>#</th>
+	          <th>Url</th>
+	          <th class="text-right">Action</th>
+	        </tr>
+	      </thead>
+	      <tbody>
+	        <tr>
+	          <td>1</td>
+	          <td>https://www.google.by/</td>
+	          <td class="text-right">
+	              <a href="#"><i class="glyphicon glyphicon-pencil"></i></a>
+	              <a href="#" role="button"><i class="glyphicon glyphicon-remove"></i></a>
+	          </td>
+	        </tr>
+	      </tbody>
+	    </table>
+	</div>
+	<form action="./urlsControl" method="post">
+	    <div class="form-group">
+				{% csrf_token %}
+				{{ form }}
+		</div>
+	    <button class="btn btn-primary pull-right" type="submit">Add new url</button>
+	</form>
+	<br>
+	<br>
+	<button class="btn btn-info pull-right">Load urls from file</button>
+	
+</div>
+
