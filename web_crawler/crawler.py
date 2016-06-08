@@ -54,7 +54,7 @@ class WebCrawler(object):
         rp.read()
         return rp
 
-    def traverse(self, start_url):
+    def traverse(self, start_url, event, queue):
         # import pdb; pdb.set_trace()
         try:
             rp = self._create_robot_file_parser(start_url)
@@ -66,6 +66,10 @@ class WebCrawler(object):
         temp = defaultdict(list)
         temp[level].append(start_url)
         urls = [start_url]
+
+        queue.put(start_url)
+        event.set()
+
         while True:
             if temp[level] == []:
                 temp.pop(level)
@@ -89,8 +93,12 @@ class WebCrawler(object):
                     if width > self._limit_width:
                         break
                     temp[level + 1].append(tag['href'])
+                    print "CRAWLER_WORKER"
+                    print "SET EVENT"
+                    event.set()
+                    queue.put(tag['href'])
                     urls.append(tag['href'])
-        return urls
+        # return urls
 
 
 if __name__ == "__main__":
