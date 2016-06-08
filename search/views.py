@@ -8,6 +8,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from web_crawler.crawler import WebCrawler
 
+import threading
+from Queue import Queue
+
 def index(request):
     form = SearchForm()
     return render(request, 'search/index.html', {'form': form})
@@ -72,14 +75,40 @@ def search_for_results(request):
                                                                  'form': f })
     return HttpResponseRedirect(reverse('index'))
 
+def crawler_worker(crawler, start_url, event, queue):
+    crawler.traverse(start_url, event, queue)
+
+def search_engine_worker(s, event, queue):
+    event.wait()
+    print "Event has been setted by CRAWLER_WORKER"
+    while not queue.empty():
+        print "SEARCH_ENGINE_WORKER"
+        url = queue.get()
+        print url
+        s.create_index(url) 
+        if queue.empty():
+            event.wait()
+
 def traverse_site(request):
     if request.method == 'POST':
         form = RecursiveTraversalForm(request.POST)
         if form.is_valid():
             start_url = form.cleaned_data['start_url']
             crawler = WebCrawler(limit_width=2, limit_depth=3)
-            urls = crawler.traverse(start_url)
+            
             s = SearchEngine()
-            for url in urls:
-                s.create_index(url)
+            event = threading.Event()
+            queue = Queue()
+            crawler_thread = threading.Thread(target=crawler_worker, args=(crawler, start_url, event, queue))
+            search_engine_thread = threading.Thread(target=search_engine_worker, args=(s, event, queue))
+            crawler_thread.start()
+            search_engine_thread.start()
+
+
+
+            crawler_thread.join()
+            search_engine_thread.join()
+            
     return HttpResponseRedirect(reverse('urls_control'))
+
+
