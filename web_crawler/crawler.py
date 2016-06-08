@@ -33,14 +33,7 @@ class WebCrawler(object):
         self._limit_depth = limit_depth
         self._agent_name = agent_name
 
-    def _allowed_to_open(self, url):
-        host = urlparse.urlsplit(url)[1]
-        robots_url = urlparse.urlunsplit(('http', host, '/robots.txt', '', ''))
-        rp = RobotFileParser(robots_url)
-        try:
-            rp.read()
-        except:
-            return False
+    def _allowed_to_open(self, rp, url):
         return rp.can_fetch(self._agent_name, url)
 
     def _request_head(self, url):
@@ -48,15 +41,26 @@ class WebCrawler(object):
         resp = h.request(url, "HEAD")[0]
         return resp['status']
 
-    def _check_url(self, url):
+    def _check_url(self, rp, url):
         status = self._request_head(url)
         if not status or status in BAD_CODES:
             return False
-        return self._allowed_to_open(url)
+        return self._allowed_to_open(rp, url)
+
+    def _create_robot_file_parser(self, url):
+        host = urlparse.urlsplit(url)[1]
+        robots_url = urlparse.urlunsplit(('http', host, '/robots.txt', '', ''))
+        rp = RobotFileParser(robots_url)
+        rp.read()
+        return rp
 
     def traverse(self, start_url):
         # import pdb; pdb.set_trace()
-        if not self._check_url(start_url):
+        try:
+            rp = self._create_robot_file_parser(start_url)
+        except:
+            return []
+        if not self._check_url(rp, start_url):
             return []
         level = 0
         temp = defaultdict(list)
@@ -79,7 +83,7 @@ class WebCrawler(object):
             for tag in soup.findAll('a', href=True):
                 tag['href'] = urlparse.urljoin(start_url, tag['href'])
                 if start_url in tag['href'] and tag['href'] not in urls:
-                    if not self._check_url(tag['href']):
+                    if not self._check_url(rp, tag['href']):
                         continue
                     width += 1
                     if width > self._limit_width:
