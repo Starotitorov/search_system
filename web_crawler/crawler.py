@@ -67,7 +67,7 @@ class WebCrawler(object):
                 temp.pop(level)
                 level += 1
                 if temp[level] == [] or level + 1 > self._limit_depth:
-                    return urls
+                    break
             cur_url = temp[level][0]
             temp[level].pop(0)
             try:
@@ -78,7 +78,7 @@ class WebCrawler(object):
             width = 0
             for tag in soup.findAll('a', href=True):
                 tag['href'] = urlparse.urljoin(start_url, tag['href'])
-                if url in tag['href'] and tag['href'] not in urls:
+                if start_url in tag['href'] and tag['href'] not in urls:
                     if not self._check_url(tag['href']):
                         continue
                     width += 1
@@ -90,6 +90,6 @@ class WebCrawler(object):
 
 
 if __name__ == "__main__":
-    crawler = WebCrawler()
-    url = "http://habrahabr.ru"
+    crawler = WebCrawler(limit_width=2, limit_depth=4)
+    url = "https://www.djangoproject.com/"
     print crawler.traverse(url)

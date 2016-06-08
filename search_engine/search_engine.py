@@ -21,11 +21,15 @@ class SearchEngine:
         index = buildIndex.get_index()
         number_of_words = buildIndex.get_number_of_words()
         try:
-            self.delete_index(url)
+            document = Page.objects.get(url=url)
+            for match in Match.objects.filter(page=document):
+                word = match.word
+                match.delete()
+                if not word.pages.all():
+                    word.delete()
         except ObjectDoesNotExist:
-            pass
-        document = Page(url=url, number_of_words=number_of_words)
-        document.save()
+            document = Page(url=url, number_of_words=number_of_words)
+            document.save()
         for word in index.keys():
             positions = " ".join(str(x) for x in index[word])
             try:
@@ -100,7 +104,7 @@ class SearchEngine:
                     temp[i][j] -= i
             if set(temp[0]).intersection(*temp):
                 result.append(url)
-        return result
+        return self.rank_results(words, result)
 
     def _count_idf(self, N, n):
         res = math.log((N - n + 0.5) * 1.0 / (n + 0.5))
@@ -178,9 +182,9 @@ class SearchEngine:
                     / average_size_of_document))
                 score += r * idf
 
-            doc_phrase_weight = self.doc_phrase_weight(words_positions)
+            #doc_phrase_weight = self.doc_phrase_weight(words_positions)
             # print score
-            scores[url] = doc_phrase_weight*1000 + score*999
+            scores[url] = score #doc_phrase_weight*1000 + score*999
         # Now we have bm25 for all documents
 
         sorted_by_score_urls = sorted(scores.items(), key=operator.itemgetter(1),

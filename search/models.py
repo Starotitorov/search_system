@@ -12,7 +12,7 @@ class Page(models.Model):
 
 
 class Word(models.Model):
-    value = models.CharField(max_length=30, unique=True)
+    value = models.CharField(max_length=100, unique=True)
     pages = models.ManyToManyField(Page, through="Match")
 
     def __unicode__(self):

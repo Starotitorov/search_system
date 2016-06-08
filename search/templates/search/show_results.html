@@ -10,25 +10,34 @@
 {% load staticfiles %}
 
 <link rel="stylesheet" type="text/css" href="{% static 'search/index.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'search/show_results.css' %}">
 
 <div class="container">
-  <a class="btn btn-lg pull-right" href="./urlsControl">
-    <i class="glyphicon glyphicon-tasks pull-left"></i><span>Show searching Urls</span></a> 
-    <div class="row">
-        <div class="col-sm-6 col-sm-offset-3">
-            <div id="imaginary_container"> 
-              <form action="./results" method="post">
-                <div class="input-group stylish-input-group input-append">
-                      {% csrf_token %}
-                      {{ form }}
-                      <span class="input-group-addon">
-                        <button type="submit">
-                          <span class="glyphicon glyphicon-search"></span>
-                        </button>  
-                      </span>
-                  </div>
-                </form>
-            </div>
-        </div>
-	</div>
+  <div class="row">
+    <div id="search_container">
+    <form action="./results" method="post">
+      <div class="input-group stylish-input-group input-append">
+        {% csrf_token %}
+        {{ form }}
+        <span class="input-group-addon">
+          <button type="submit">
+            <span class="glyphicon glyphicon-search"></span>
+          </button>
+        </span>
+      </div>
+    </form>
+    </div>
+  </div>
+  {% if urls %}
+  <div class="row">
+    <div class="list-group">
+      <div class="list-group-item active">Results:</div>
+        {% for url in urls %}
+          <div class="list-group-item">
+            <a href="{{ url }}">{{ url }}</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
 </div>
