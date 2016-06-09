@@ -77,8 +77,8 @@ class SearchEngine:
         if not words:
             return list_of_results
         for word in words:
-                list_of_results.append(self.search_one_word(word))
-        return self.rank_results(words, list(set(list_of_results[0]).intersection(*list_of_results)))
+                list_of_results.extend(self.search_one_word(word))
+        return self.rank_results(words, list_of_results)
 
     def search_phrase(self, phrase):
         # import pdb; pdb.set_trace()
@@ -169,12 +169,18 @@ class SearchEngine:
             score = 0.0
             words_positions = {}
             for w in words:
-                word = Word.objects.get(value=w)
+                try:
+                    word = Word.objects.get(value=w)
+                except:
+                    continue
                 n = word.pages.count()
                 idf = self._count_idf(N, n)
                 page = Page.objects.get(url=url)
                 number_of_words_on_page = page.number_of_words
-                current_word_positions = Match.objects.get(page=page, word=word).positions.split()
+                try:
+                    current_word_positions = Match.objects.get(page=page, word=word).positions.split()
+                except:
+                    continue
                 number_of_occurrences = len(current_word_positions)
                 words_positions[word] = current_word_positions
                 frequency = number_of_occurrences * 1.0 / number_of_words_on_page
