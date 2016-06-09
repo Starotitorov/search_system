@@ -98,7 +98,7 @@ class WebCrawler(object):
                     event.set()
                     queue.put(tag['href'])
                     urls.append(tag['href'])
-        # return urls
+        return urls
 
 
 if __name__ == "__main__":

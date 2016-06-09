@@ -7,6 +7,7 @@ from forms import NewUrlForm, LoadUrlsFromFileForm, SearchForm, RecursiveTravers
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from web_crawler.crawler import WebCrawler
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 import threading
 from Queue import Queue
@@ -21,10 +22,23 @@ def urlsControl(request):
     form = NewUrlForm()
     file_form = LoadUrlsFromFileForm()
     traversal_form = RecursiveTraversalForm()
-    return render(request, 'search/urlsControl.html', { 'form': form,
+    return render(request, 'search/urls_control.html', { 'form': form,
                                                         'file_form': file_form,
                                                         'traversal_form': traversal_form,
                                                         'pages': pages })
+
+def index_control(request):
+    word_list = Word.objects.all()
+    paginator = Paginator(word_list, 5)
+    page = request.GET.get('page')
+    try:
+        words = paginator.page(page)
+    except PageNotAnInteger:
+        words = paginator.page(1)
+    except EmptyPage:
+        words = paginator.page(paginator.num_pages)
+    return render(request, 'search/index_control.html', { 'words': words })
+
 def add_url(request):
     if request.method == 'POST':
         form = NewUrlForm(request.POST)
@@ -65,13 +79,17 @@ def update_url(request, pk):
     return HttpResponseRedirect(reverse('urls_control'))
 
 def search_for_results(request):
+    # import pdb; pdb.set_trace()
     if request.method == "POST":
         form = SearchForm(request.POST)
         if form.is_valid():
             s = SearchEngine()
             res = s.search_text(form.cleaned_data['text'])
+            pages = []
+            for url in res:
+                pages.append(Page.objects.get(url=url))
             f = SearchForm()
-            return render(request, 'search/show_results.html', { 'urls': res,
+            return render(request, 'search/show_results.html', { 'pages': pages,
                                                                  'form': f })
     return HttpResponseRedirect(reverse('index'))
 

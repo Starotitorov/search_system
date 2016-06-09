@@ -14,8 +14,13 @@
 
 <div class="container">
   <div class="row">
+    <a class="btn btn-lg btn-link pull-right" href="./">
+      <i class="glyphicon glyphicon-home pull-left"></i><span>Go to main page</span>
+    </a> 
+  </div>
+  <div class="row">
     <div id="search_container">
-    <form action="./results" method="post">
+    <form id="search-form" action="./results" method="post">
       <div class="input-group stylish-input-group input-append">
         {% csrf_token %}
         {{ form }}
@@ -28,14 +33,18 @@
     </form>
     </div>
   </div>
-  {% if urls %}
+  {% if pages %}
   <div class="row">
-    <div class="list-group">
-      <div class="list-group-item active">Results:</div>
-        {% for url in urls %}
-          <div class="list-group-item">
-            <a href="{{ url }}">{{ url }}</a>
-          </div>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Results:</h3>
+      </div>
+      <div class="panel-body">
+        {% for page in pages %}
+          <blockquote>
+            <p><a href="{{ page.url }}" class="text-info">{{ page.title }}</a></p>
+            <footer><a href="{{ page.url }}" class="text-success">{{ page.url }}</a></footer>
+          </blockquote>
         {% endfor %}
       </div>
     </div>

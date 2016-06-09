@@ -5,6 +5,8 @@ from django.db import models
 
 class Page(models.Model):
     url = models.URLField(unique=True)
+    title = models.CharField(max_length=10000, null=True)
+    content = models.TextField(null=True)
     number_of_words = models.IntegerField(default=0)
 
     def __unicode__(self):

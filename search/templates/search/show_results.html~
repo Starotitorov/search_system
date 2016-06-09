@@ -10,38 +10,40 @@
 {% load staticfiles %}
 
 <link rel="stylesheet" type="text/css" href="{% static 'search/index.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'search/show_results.css' %}">
 
 <div class="container">
   <div class="row">
-    <a class="btn btn-lg btn-link pull-right" href="./urls_control">
-      <i class="glyphicon glyphicon-tasks pull-left"></i><span>Show searching urls</span>
-    </a> 
+    <div id="search_container">
+    <form action="./results" method="post">
+      <div class="input-group stylish-input-group input-append">
+        {% csrf_token %}
+        {{ form }}
+        <span class="input-group-addon">
+          <button type="submit">
+            <span class="glyphicon glyphicon-search"></span>
+          </button>
+        </span>
+      </div>
+    </form>
+    </div>
   </div>
+  {% if pages %}
   <div class="row">
-    <a class="btn btn-lg btn-link pull-right" href="./index_control">
-      <i class="glyphicon glyphicon-tasks pull-left"></i><span>Show index</span>
-    </a> 
-  </div>
-  <div class="row">
-    <div class="col-sm-6 col-sm-offset-3">
-      <div id="logo">
-        <img src="{% static 'images/logo.png' %}" class="img-responsive" alt="Logo">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Results:</h3>
+      </div>
+      <div class="panel-body">
+        <div id="results-container">
+        {% for page in pages %}
+          <blockquote>
+            <p><a href="{{ page.url }}" class="text-info">{{ page.title }}</a></p>
+            <footer><a href="{{ page.url }}" class="text-success">{{ page.url }}</a></footer>
+          </blockquote>
+        {% endfor %}
+        </div>
       </div>
     </div>
-  </div>
-  <div class="row">
-    <div class="col-sm-6 col-sm-offset-3">
-      <form action="./results" method="post">
-        <div class="input-group stylish-input-group input-append">
-          {% csrf_token %}
-          {{ form }}
-          <span class="input-group-addon">
-            <button type="submit">
-              <span class="glyphicon glyphicon-search"></span>
-            </button>  
-          </span>
-        </div>
-      </form>
-    </div>
-	</div>
+  {% endif %}
 </div>

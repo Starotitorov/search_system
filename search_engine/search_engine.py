@@ -16,8 +16,8 @@ class SearchEngine:
     def create_index(self, url):
         # url = "http://fapl.ru/"
         htmlToTextConverter = HtmlToTextConverter()
-        text = htmlToTextConverter.transform_html_into_text(url)
-        buildIndex = BuildIndex(text)
+        title, content = htmlToTextConverter.transform_html_into_text(url)
+        buildIndex = BuildIndex(content)
         index = buildIndex.get_index()
         number_of_words = buildIndex.get_number_of_words()
         try:
@@ -28,7 +28,8 @@ class SearchEngine:
                 if not word.pages.all():
                     word.delete()
         except ObjectDoesNotExist:
-            document = Page(url=url, number_of_words=number_of_words)
+            document = Page(url=url, number_of_words=number_of_words,
+                            title=title, content=content)
             document.save()
         for word in index.keys():
             positions = " ".join(str(x) for x in index[word])
@@ -89,9 +90,8 @@ class SearchEngine:
             list_of_results.append(self.search_one_word(word))
         setted = set(list_of_results[0]).intersection(*list_of_results)
         result = []
-        for url in setted:
+        for page in setted:
             temp = []
-            page = Page.objects.get(url=url)
             for word in words:
                 w = Word.objects.get(value=word)
                 match = Match.objects.get(page=page, word=w)
@@ -169,8 +169,6 @@ class SearchEngine:
                 word = Word.objects.get(value=w)
                 n = word.pages.count()
                 idf = self._count_idf(N, n)
-                if idf < 0:
-                    continue
                 page = Page.objects.get(url=url)
                 number_of_words_on_page = page.number_of_words
                 current_word_positions = Match.objects.get(page=page, word=word).positions.split()
@@ -186,9 +184,9 @@ class SearchEngine:
             # print score
             scores[url] = score #doc_phrase_weight*1000 + score*999
         # Now we have bm25 for all documents
-
         sorted_by_score_urls = sorted(scores.items(), key=operator.itemgetter(1),
                                     reverse=True)
+        print sorted_by_score_urls
         res = []
         for i in sorted_by_score_urls:
             res.append(i[0])
