@@ -113,6 +113,9 @@ class SearchEngine:
         return res
 
     def doc_phrase_weight(self, words_positions):
+        for word in words_positions.keys():
+            words_positions[word] = [int(x) for x in words_positions[word]]
+
         words_positions_pointers = {}
         for word in words_positions.keys():
             words_positions_pointers[word] = 0
@@ -134,10 +137,10 @@ class SearchEngine:
                     next_word = words[j]
                     positions = words_positions[next_word]
                     position_pointer = words_positions_pointers[next_word]
-                    while position_pointer < len(positions) - 1 and positions[position_pointer] < last_position:
+                    while (position_pointer < len(positions) - 1 and positions[position_pointer] < last_position):
                         position_pointer += 1
 
-                    if positions[position_pointer] == last_position + 1:
+                    if positions[position_pointer] == str(last_position + 1):
                         result_length += 1
                         last_position += 1
                         
@@ -180,9 +183,9 @@ class SearchEngine:
                     / average_size_of_document))
                 score += r * idf
 
-            #doc_phrase_weight = self.doc_phrase_weight(words_positions)
-            # print score
-            scores[url] = score #doc_phrase_weight*1000 + score*999
+            doc_phrase_weight = self.doc_phrase_weight(words_positions)
+
+            scores[url] = doc_phrase_weight*1000 + score*999
         # Now we have bm25 for all documents
         sorted_by_score_urls = sorted(scores.items(), key=operator.itemgetter(1),
                                     reverse=True)

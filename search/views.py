@@ -113,7 +113,7 @@ def traverse_site(request):
         if form.is_valid():
             start_url = form.cleaned_data['start_url']
             crawler = WebCrawler(limit_width=2, limit_depth=3)
-            
+
             s = SearchEngine()
             event = threading.Event()
             queue = Queue()

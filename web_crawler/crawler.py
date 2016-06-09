@@ -59,8 +59,10 @@ class WebCrawler(object):
         try:
             rp = self._create_robot_file_parser(start_url)
         except:
+            event.set()
             return []
         if not self._check_url(rp, start_url):
+            event.set()
             return []
         level = 0
         temp = defaultdict(list)
